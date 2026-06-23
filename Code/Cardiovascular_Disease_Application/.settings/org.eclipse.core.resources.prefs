@@ -1,0 +1,10 @@
+eclipse.preferences.version=1
+encoding//src/com/Classification/FeatureSelection.java=UTF-8
+encoding//src/com/Classification/PredictUserInput.java=UTF-8
+encoding//src/com/admin/DatabaseToCSV.java=UTF-8
+encoding//src/com/algo/AdvancedEnsemble.java=UTF-8
+encoding//src/com/algo/FeatureSelectionH.java=UTF-8
+encoding//src/com/algo/MainPipeline.java=UTF-8
+encoding//src/com/algo/PSOFeatureSelection.java=UTF-8
+encoding//src/com/algo/Preprocessing.java=UTF-8
+encoding//src/com/connection/Dbconn.java=UTF-8

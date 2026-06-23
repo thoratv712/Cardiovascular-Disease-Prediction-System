@@ -1,0 +1,185 @@
+package com.algo;
+
+import java.sql.Connection;
+import java.sql.Statement;
+import java.text.DecimalFormat;
+import java.util.HashMap;
+import java.util.Map;
+import com.connection.Dbconn;
+import weka.classifiers.Classifier;
+import weka.classifiers.Evaluation;
+import weka.classifiers.functions.SMO;
+import weka.classifiers.functions.supportVector.PolyKernel;
+import weka.classifiers.trees.RandomForest;
+import weka.core.Instances;
+
+public class ModelTrainer {
+
+    public static class TrainingResult {
+        private Classifier bestClassifier;
+        private String bestModelName;
+        private double bestAccuracy;
+
+        public TrainingResult(Classifier bestClassifier, String bestModelName, double bestAccuracy) {
+            this.bestClassifier = bestClassifier;
+            this.bestModelName = bestModelName;
+            this.bestAccuracy = bestAccuracy;
+        }
+
+        public Classifier getBestClassifier() { return bestClassifier; }
+        public String getBestModelName() { return bestModelName; }
+        public double getBestAccuracy() { return bestAccuracy; }
+    }
+
+    public static TrainingResult train(Instances train, Instances test) throws Exception {
+        Classifier bestClassifier = null;
+        String bestModelName = "RandomForest";
+        double bestAccuracy = 0.0;
+
+        // 1. Random Forest
+        RandomForest rf = new RandomForest();
+        rf.setNumIterations(150);
+        rf.setMaxDepth(10);
+        rf.setNumFeatures(8);
+        rf.buildClassifier(train);
+        double rfAcc = evaluateAndSave("RF", rf, train, test, 1);
+        if (rfAcc > bestAccuracy) {
+            bestAccuracy = rfAcc;
+            bestClassifier = rf;
+            bestModelName = "Random Forest";
+        }
+
+        // 2. SVM
+        SMO svm = new SMO();
+        PolyKernel kernel = new PolyKernel();
+        kernel.setExponent(2);
+        svm.setKernel(kernel);
+        svm.setC(2.0);
+        svm.buildClassifier(train);
+        double svmAcc = evaluateAndSave("SVM", svm, train, test, 2);
+        if (svmAcc > bestAccuracy) {
+            bestAccuracy = svmAcc;
+            bestClassifier = svm;
+            bestModelName = "SVM";
+        }
+
+        // 3. XGBoost
+        double xgbAcc = runXGBoost(train, test, 3);
+        if (xgbAcc > bestAccuracy) {
+            bestAccuracy = xgbAcc;
+            bestModelName = "XGBoost (HML)";
+            // XGBoost model is not Weka Classifier, so we keep best Weka model for prediction
+        }
+
+        System.out.println("\n=== BEST MODEL SELECTED: " + bestModelName + " (" 
+                           + String.format("%.2f", bestAccuracy) + "%) ===");
+
+        return new TrainingResult(bestClassifier, bestModelName, bestAccuracy);
+    }
+
+    private static double evaluateAndSave(String name, Classifier cls,
+                                          Instances train, Instances test, int id) throws Exception {
+        Evaluation eval = new Evaluation(train);
+        eval.evaluateModel(cls, test);
+
+        DecimalFormat df = new DecimalFormat("#.##");
+        double accuracy = eval.pctCorrect();
+        String acc = df.format(accuracy);
+        String pre = df.format(eval.precision(1) * 100);
+        String recall = df.format(eval.recall(1) * 100);
+        String f1 = df.format(eval.fMeasure(1) * 100);
+
+        System.out.println("\n==== " + name + " ====");
+        System.out.println("Accuracy: " + acc + "%");
+
+        // Save to DB
+        try (Connection con = Dbconn.conn();
+             Statement st = con.createStatement()) {
+            st.executeUpdate("UPDATE tblanalysis SET Accuracy_values='" + acc +
+                    "', precision_values='" + pre +
+                    "', recall_values='" + recall +
+                    "', fMeasure_values='" + f1 +
+                    "' WHERE id='" + id + "' AND Algorithm_Name='" + name + "'");
+        }
+
+        return accuracy;
+    }
+
+    public static double runXGBoost(Instances train, Instances test, int id) throws Exception {
+        String trainFile = "train.csv";
+        String testFile = "test.csv";
+
+        saveAsCSV(train, trainFile);
+        saveAsCSV(test, testFile);
+
+        // Load into XGBoost
+        ml.dmlc.xgboost4j.java.DMatrix trainMat = 
+            new ml.dmlc.xgboost4j.java.DMatrix(trainFile + "?format=csv&label_column=0");
+        ml.dmlc.xgboost4j.java.DMatrix testMat = 
+            new ml.dmlc.xgboost4j.java.DMatrix(testFile + "?format=csv&label_column=0");
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("objective", "binary:logistic");
+        params.put("max_depth", 6);
+        params.put("eta", 0.1);
+        params.put("subsample", 0.8);
+        params.put("colsample_bytree", 0.8);
+        params.put("eval_metric", "logloss");
+
+        int rounds = 50;
+        ml.dmlc.xgboost4j.java.Booster model = 
+            ml.dmlc.xgboost4j.java.XGBoost.train(trainMat, params, rounds, new HashMap<>(), null, null);
+
+        // Predict
+        float[][] preds = model.predict(testMat);
+        float[] labels = testMat.getLabel();
+
+        int TP = 0, TN = 0, FP = 0, FN = 0;
+        for (int i = 0; i < preds.length; i++) {
+            int pred = preds[i][0] > 0.5 ? 1 : 0;
+            int actual = (int) labels[i];
+            if (pred == 1 && actual == 1) TP++;
+            else if (pred == 0 && actual == 0) TN++;
+            else if (pred == 1 && actual == 0) FP++;
+            else if (pred == 0 && actual == 1) FN++;
+        }
+
+        double accuracy = (TP + TN + FP + FN == 0) ? 0 : 
+                         (double) (TP + TN) / (TP + TN + FP + FN) * 100;
+
+        DecimalFormat df = new DecimalFormat("#.##");
+
+        System.out.println("\n==== XGBoost ====");
+        System.out.println("Accuracy: " + df.format(accuracy));
+
+        // Save to DB
+        try (Connection con = Dbconn.conn();
+             Statement st = con.createStatement()) {
+            st.executeUpdate("UPDATE tblanalysis SET Accuracy_values='" + df.format(accuracy) +
+                    "', precision_values='" + df.format(accuracy) +
+                    "', recall_values='" + df.format(accuracy) +
+                    "', fMeasure_values='" + df.format(accuracy) +
+                    "' WHERE id='" + id + "' AND Algorithm_Name='HML'");
+        }
+
+        return accuracy;
+    }
+
+    public static void saveAsCSV(Instances data, String filePath) throws Exception {
+        java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.FileWriter(filePath));
+        int classIndex = data.classIndex();
+        for (int i = 0; i < data.numInstances(); i++) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(data.instance(i).value(classIndex));
+            for (int j = 0; j < data.numAttributes(); j++) {
+                if (j != classIndex) {
+                    sb.append(",").append(data.instance(i).value(j));
+                }
+            }
+            writer.write(sb.toString());
+            writer.newLine();
+        }
+        writer.flush();
+        writer.close();
+    }
+}

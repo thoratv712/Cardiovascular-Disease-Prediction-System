@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+    xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee 
+    http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
+    id="WebApp_ID" version="3.1">
+
+    <display-name>Cardiovascular_Disease_Application</display-name>
+
+    <welcome-file-list>
+        <welcome-file>loginpage</welcome-file>
+    </welcome-file-list>
+
+    <servlet>
+        <servlet-name>loginpage</servlet-name>
+        <servlet-class>com.activity.loginpage</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>loginpage</servlet-name>
+        <url-pattern>/loginpage</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>Datasetupload</servlet-name>
+        <servlet-class>com.admin.Datasetupload</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>Datasetupload</servlet-name>
+        <url-pattern>/Datasetupload</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>preprocess</servlet-name>
+        <servlet-class>com.Classification.preprocess</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>preprocess</servlet-name>
+        <url-pattern>/preprocess</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>FeatureSelection</servlet-name>
+        <servlet-class>com.Classification.FeatureSelection</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>FeatureSelection</servlet-name>
+        <url-pattern>/FeatureSelection</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>Classification_process</servlet-name>
+        <servlet-class>com.Classification.Classification_process</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>Classification_process</servlet-name>
+        <url-pattern>/Classification_process</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>PredictUserInput</servlet-name>
+        <servlet-class>com.Classification.PredictUserInput</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>PredictUserInput</servlet-name>
+        <url-pattern>/PredictUserInput</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>PredictRisk</servlet-name>
+        <servlet-class>com.Classification.PredictRiskServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>PredictRisk</servlet-name>
+        <url-pattern>/PredictRisk</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>AnalysisExport</servlet-name>
+        <servlet-class>com.admin.AnalysisExport</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>AnalysisExport</servlet-name>
+        <url-pattern>/AnalysisExport</url-pattern>
+    </servlet-mapping>
+    <servlet>
+    <servlet-name>PredictRisk</servlet-name>
+    <servlet-class>com.Classification.PredictRiskServlet</servlet-class>
+</servlet>
+<servlet-mapping>
+    <servlet-name>PredictRisk</servlet-name>
+    <url-pattern>/PredictRisk</url-pattern>
+</servlet-mapping>
+
+</web-app>

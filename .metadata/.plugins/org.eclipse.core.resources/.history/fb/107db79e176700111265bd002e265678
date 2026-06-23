@@ -1,0 +1,145 @@
+package com.algo;
+
+import java.sql.Connection;
+import java.sql.Statement;
+import java.text.DecimalFormat;
+import java.util.HashMap;
+import java.util.Map;
+import com.connection.Dbconn;
+import weka.classifiers.Classifier;
+import weka.classifiers.Evaluation;
+import weka.classifiers.functions.SMO;
+import weka.classifiers.functions.supportVector.PolyKernel;
+import weka.classifiers.trees.RandomForest;
+import weka.core.Instances;
+
+public class ModelTrainer {
+
+    // Inner class to return best model information
+    public static class TrainingResult {
+        private Classifier bestClassifier;
+        private String bestModelName;
+        private double bestAccuracy;
+
+        public TrainingResult(Classifier bestClassifier, String bestModelName, double bestAccuracy) {
+            this.bestClassifier = bestClassifier;
+            this.bestModelName = bestModelName;
+            this.bestAccuracy = bestAccuracy;
+        }
+
+        public Classifier getBestClassifier() { return bestClassifier; }
+        public String getBestModelName() { return bestModelName; }
+        public double getBestAccuracy() { return bestAccuracy; }
+    }
+
+    public static TrainingResult train(Instances train, Instances test) throws Exception {
+        Classifier bestClassifier = null;
+        String bestModelName = "";
+        double bestAccuracy = 0.0;
+
+        // Random Forest
+        RandomForest rf = new RandomForest();
+        rf.setNumIterations(150);
+        rf.setMaxDepth(10);
+        rf.setNumFeatures(8);
+        rf.buildClassifier(train);
+        double rfAcc = evaluateAndSave("RF", rf, train, test, 1);
+        if (rfAcc > bestAccuracy) {
+            bestAccuracy = rfAcc;
+            bestClassifier = rf;
+            bestModelName = "Random Forest";
+        }
+
+        // SVM
+        SMO svm = new SMO();
+        PolyKernel kernel = new PolyKernel();
+        kernel.setExponent(2);
+        svm.setKernel(kernel);
+        svm.setC(2.0);
+        svm.buildClassifier(train);
+        double svmAcc = evaluateAndSave("SVM", svm, train, test, 2);
+        if (svmAcc > bestAccuracy) {
+            bestAccuracy = svmAcc;
+            bestClassifier = svm;
+            bestModelName = "SVM";
+        }
+
+        // XGBoost
+        double xgbAcc = runXGBoost(train, test, 3);
+        if (xgbAcc > bestAccuracy) {
+            bestAccuracy = xgbAcc;
+            bestModelName = "XGBoost (HML)";
+            // Note: XGBoost Booster is not directly Weka Classifier.
+            // For prediction, we will fallback to best Weka model for now.
+        }
+
+        System.out.println("\n=== BEST MODEL SELECTED: " + bestModelName + " (" 
+                           + String.format("%.2f", bestAccuracy) + "%) ===");
+
+        return new TrainingResult(bestClassifier, bestModelName, bestAccuracy);
+    }
+
+    private static double evaluateAndSave(String name, Classifier cls,
+                                          Instances train, Instances test, int id) throws Exception {
+        Evaluation eval = new Evaluation(train);
+        eval.evaluateModel(cls, test);
+
+        DecimalFormat df = new DecimalFormat("#.##");
+        double accuracy = eval.pctCorrect();
+        String acc = df.format(accuracy);
+        String pre = df.format(eval.precision(1) * 100);
+        String recall = df.format(eval.recall(1) * 100);
+        String f1 = df.format(eval.fMeasure(1) * 100);
+
+        System.out.println("\n==== " + name + " ====");
+        System.out.println("Accuracy: " + acc + "%");
+
+        // Save to database
+        try (Connection con = Dbconn.conn();
+             Statement st = con.createStatement()) {
+            st.executeUpdate("UPDATE tblanalysis SET Accuracy_values='" + acc +
+                    "', precision_values='" + pre +
+                    "', recall_values='" + recall +
+                    "', fMeasure_values='" + f1 +
+                    "' WHERE id='" + id + "' AND Algorithm_Name='" + name + "'");
+        }
+
+        return accuracy;
+    }
+
+    public static double runXGBoost(Instances train, Instances test, int id) throws Exception {
+        // ... (your existing XGBoost code remains mostly the same)
+        // I'll keep it short here for brevity - you can merge your original runXGBoost logic
+
+        String trainFile = "train.csv";
+        String testFile = "test.csv";
+        saveAsCSV(train, trainFile);
+        saveAsCSV(test, testFile);
+
+        // ... rest of your XGBoost training code ...
+
+        // Return accuracy
+        double accuracy = /* calculate from your confusion matrix */;
+        // Save to DB (your existing code)
+        return accuracy;
+    }
+
+    public static void saveAsCSV(Instances data, String filePath) throws Exception {
+        // Your existing saveAsCSV method - no change needed
+        java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.FileWriter(filePath));
+        int classIndex = data.classIndex();
+        for (int i = 0; i < data.numInstances(); i++) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(data.instance(i).value(classIndex));
+            for (int j = 0; j < data.numAttributes(); j++) {
+                if (j != classIndex) {
+                    sb.append(",").append(data.instance(i).value(j));
+                }
+            }
+            writer.write(sb.toString());
+            writer.newLine();
+        }
+        writer.flush();
+        writer.close();
+    }
+}

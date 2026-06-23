@@ -1,0 +1,22 @@
+https://www.kaggle.com/datasets/jocelyndumlao/cardiovascular-disease-dataset?utm_source
+
+
+
+
+==== RF ====
+Accuracy: 96
+Precision: 97.53
+Recall: 95.18
+F1 Score: 96.34
+
+==== SVM ====
+Accuracy: 94.67
+Precision: 95.73
+Recall: 94.58
+F1 Score: 95.15
+
+==== STACKING (ANN+J48+AdaBoost+NB) ====
+Accuracy: 97.33
+Precision: 97.59
+Recall: 97.59
+F1 Score: 97.59

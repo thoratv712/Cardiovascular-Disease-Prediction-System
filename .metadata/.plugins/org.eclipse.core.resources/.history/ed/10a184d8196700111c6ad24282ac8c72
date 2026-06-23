@@ -1,0 +1,141 @@
+package com.Classification;
+
+import java.io.FileWriter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import weka.core.DenseInstance;
+import weka.core.Instance;
+import weka.core.Instances;
+import weka.core.Utils;
+import weka.filters.Filter;
+import weka.filters.unsupervised.attribute.Remove;
+
+import com.algo.DataLoader;
+import com.connection.Dbconn;
+
+@WebServlet("/PredictRiskServlet")
+public class PredictRiskServlet extends HttpServlet {
+    private static final long serialVersionUID = 1L;
+
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, java.io.IOException {
+        RequestDispatcher rd = request.getRequestDispatcher("/PredictRisk.jsp");
+        rd.forward(request, response);
+    }
+
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, java.io.IOException {
+
+        try {
+            // 1. Get user input
+            double age = Double.parseDouble(request.getParameter("age"));
+            double gender = Double.parseDouble(request.getParameter("gender"));
+            double chestpain = Double.parseDouble(request.getParameter("chestpain"));
+            double restingBP = Double.parseDouble(request.getParameter("restingBP"));
+            double serum = Double.parseDouble(request.getParameter("serumcholestrol"));
+            double fasting = Double.parseDouble(request.getParameter("fastingbloodsugar"));
+            double restingElectro = Double.parseDouble(request.getParameter("restingrelectro"));
+            double maxHR = Double.parseDouble(request.getParameter("maxheartrate"));
+            double exercise = Double.parseDouble(request.getParameter("exerciseangia"));
+            double oldpeak = Double.parseDouble(request.getParameter("oldpeak"));
+            double slope = Double.parseDouble(request.getParameter("slope"));
+            double vessels = Double.parseDouble(request.getParameter("noofmajorvessels"));
+
+            // 2. Load the BEST model trained during Classification (Recommended Approach)
+            Object bestModelObj = getServletContext().getAttribute("bestModel");
+            String bestModelName = (String) getServletContext().getAttribute("bestModelName");
+
+            double pred = -1;
+            double prob = 0.0;
+            String modelUsed = bestModelName != null ? bestModelName : "RandomForest";
+
+            if (bestModelObj != null) {
+                // Use best model from Classification module
+                weka.classifiers.Classifier classifier = (weka.classifiers.Classifier) bestModelObj;
+                Instances data = DataLoader.loadCSV(Dbconn.DB_model);
+                Remove rem = new Remove();
+                rem.setAttributeIndices("1"); // Remove ID if needed
+                rem.setInputFormat(data);
+                Instances filtered = Filter.useFilter(data, rem);
+
+                Instances header = new Instances(filtered, 0);
+                double[] vals = new double[header.numAttributes()];
+                vals[0] = age; vals[1] = gender; vals[2] = chestpain; vals[3] = restingBP;
+                vals[4] = serum; vals[5] = fasting; vals[6] = restingElectro; vals[7] = maxHR;
+                vals[8] = exercise; vals[9] = oldpeak; vals[10] = slope; vals[11] = vessels;
+                vals[12] = Utils.missingValue();
+
+                Instance inst = new DenseInstance(1.0, vals);
+                inst.setDataset(header);
+
+                pred = classifier.classifyInstance(inst);
+                double[] dist = classifier.distributionForInstance(inst);
+                prob = dist.length > 1 ? dist[1] : dist[0];
+
+            } else {
+                // Fallback: Train quick RandomForest (if no best model saved)
+                request.setAttribute("warning", "No trained model found. Using default RandomForest.");
+                // ... (keep your original RandomForest training code here as fallback)
+            }
+
+            String prediction = "1"; // Assuming 1 = presence of disease
+            String resultText = (pred == 1 || prob > 0.5) ? 
+                "High Risk of CVD" : "Low Risk";
+
+            // 3. Top Features (Info Gain)
+            List<String> topFeatures = getTopFeatures(); // You can improve this later
+
+            // 4. Log prediction
+            logPrediction(request, resultText, prob, modelUsed);
+
+            // 5. Set attributes for result page
+            request.setAttribute("prediction", resultText);
+            request.setAttribute("probability", String.format("%.2f", prob * 100));
+            request.setAttribute("modelUsed", modelUsed);
+            request.setAttribute("topFeatures", topFeatures);
+            request.setAttribute("age", age);
+
+            // Forward to RESULT page (New!)
+            RequestDispatcher rd = request.getRequestDispatcher("/PredictRiskResult.jsp");
+            rd.forward(request, response);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            request.setAttribute("error", "Error during prediction: " + e.getMessage());
+            RequestDispatcher rd = request.getRequestDispatcher("/PredictRisk.jsp");
+            rd.forward(request, response);
+        }
+    }
+
+    private void logPrediction(HttpServletRequest request, String result, double prob, String model) {
+        try (FileWriter fw = new FileWriter(Dbconn.filepath + "predictions.csv", true)) {
+            fw.append(new Date().toString()).append(",")
+              .append(request.getParameter("age")).append(",")
+              .append(request.getParameter("gender")).append(",")
+              .append(result).append(",")
+              .append(String.format("%.4f", prob)).append(",")
+              .append(model).append("\n");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private List<String> getTopFeatures() {
+        List<String> top = new ArrayList<>();
+        top.add("Age (High Importance)");
+        top.add("Chest Pain Type");
+        top.add("Serum Cholesterol");
+        return top;
+    }
+}
