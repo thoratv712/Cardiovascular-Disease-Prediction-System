@@ -142,3 +142,22 @@ http://localhost:8080/Cardiovascular_Disease_Application/loginpage
 | XGBoost | 95.00% | 95.21% | 95.78% | 95.50% |
 
 **Best Model:** Random Forest (96% accuracy)
+
+<img width="1366" height="730" alt="CVD SS 1 0" src="https://github.com/user-attachments/assets/3e5e740f-7f05-4626-9f60-14ac3c0a06dd" />
+<img width="1366" height="728" alt="CVD SS 2 0" src="https://github.com/user-attachments/assets/25134044-1eab-4543-ac66-5bed35f00d87" />
+<img width="1366" height="728" alt="CVD SS 2 1" src="https://github.com/user-attachments/assets/3726e336-e5ea-403e-9c36-214a21bea748" />
+<img width="1366" height="728" alt="CVD SS 2 2" src="https://github.com/user-attachments/assets/abd89a21-5810-4b98-9943-02534d68b027" />
+<img width="1366" height="728" alt="CVD SS 3 0" src="https://github.com/user-attachments/assets/98e1b951-1eea-4f1c-8a1d-3d88bc86c184" />
+<img width="1366" height="728" alt="CVD SS 3 1" src="https://github.com/user-attachments/assets/1bf9c682-622a-40da-b2b7-6ed21f6abfb3" />
+<img width="1366" height="728" alt="CVD SS 4 0" src="https://github.com/user-attachments/assets/b1503399-4533-456c-8905-64f0369bbabf" />
+<img width="1366" height="728" alt="CVD SS 4 1" src="https://github.com/user-attachments/assets/1abff9fa-0429-4cd0-80e9-4c6230945105" />
+<img width="1366" height="728" alt="CVD SS 4 2" src="https://github.com/user-attachments/assets/1f00fa21-d97f-4f9a-88dc-f256c3c917bd" />
+<img width="1366" height="728" alt="CVD SS 4 3" src="https://github.com/user-attachments/assets/60b5e726-fc20-420a-b8be-7d4018862550" />
+<img width="1366" height="728" alt="CVD SS 4 4" src="https://github.com/user-attachments/assets/8009e809-26c8-45c4-bc3b-014c02cfafc5" />
+<img width="1366" height="728" alt="CVD SS 4 5" src="https://github.com/user-attachments/assets/ec4c8d3e-ba3f-43b0-ab8a-25e3fa570f39" />
+<img width="1366" height="728" alt="CVD SS 5 0" src="https://github.com/user-attachments/assets/d8dd8167-fd43-4e67-b6f0-776d62021a6f" />
+<img width="1366" height="728" alt="CVD SS 5 1" src="https://github.com/user-attachments/assets/996dd5d4-b7a3-4886-b284-39fcf8acf1a8" />
+<img width="1366" height="728" alt="CVD SS 5 2" src="https://github.com/user-attachments/assets/4283fd13-5226-4daa-9917-e596890724fb" />
+<img width="1366" height="728" alt="CVD SS 6 0" src="https://github.com/user-attachments/assets/237843f6-7adf-4328-9495-af1bf60b78fc" />
+
+
