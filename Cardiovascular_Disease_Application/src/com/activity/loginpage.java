@@ -19,7 +19,7 @@ import com.connection.Dbconn;
 /**
  * Servlet implementation class loginpage
  */
-@WebServlet("/loginpage")
+//@WebServlet("/loginpage")
 public class loginpage extends HttpServlet {
 	private static final long serialVersionUID = 1L;
        

@@ -25,7 +25,7 @@ import com.connection.Dbconn;
 /**
  * Servlet implementation class Datasetupload
  */
-@WebServlet("/Datasetupload")
+//@WebServlet("/Datasetupload")
 @MultipartConfig(fileSizeThreshold = 1024 * 1024 * 50, // 50MB
 maxFileSize = 1024 * 2048 * 100, // 100 MB
 

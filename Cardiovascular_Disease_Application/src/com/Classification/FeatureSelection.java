@@ -22,7 +22,7 @@ import com.connection.Dbconn;
 /**
  * Servlet implementation class FeatureSelection
  */
-@WebServlet("/FeatureSelection")
+//@WebServlet("/FeatureSelection")
 public class FeatureSelection extends HttpServlet {
 	private static final long serialVersionUID = 1L;
        

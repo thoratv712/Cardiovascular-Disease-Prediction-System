@@ -1,88 +1,361 @@
-<%@ page language="java" contentType="text/html; charset=ISO-8859-1" pageEncoding="ISO-8859-1"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="java.util.List" %>
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8">
-    <title>Predict Risk</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Life Care - Prediction</title>
     <link rel="stylesheet" href="css/bootstrap.min.css">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:Arial,sans-serif; background:#f0f4f8; }
+        .navbar-custom {
+            background:#1565C0; padding:15px 30px;
+            display:flex; align-items:center;
+            justify-content:space-between;
+        }
+        .logo { color:white; font-size:22px; font-weight:bold; }
+        .logo span { color:#90CAF9; }
+        .nav-links { display:flex; gap:5px; flex-wrap:wrap; }
+        .nav-links a {
+            color:white; text-decoration:none;
+            padding:7px 12px; border-radius:4px; font-size:13px;
+        }
+        .nav-links a:hover { background:#1976D2; }
+        .nav-links a.active { background:#0D47A1; font-weight:bold; }
+        .container-main { max-width:980px; margin:35px auto; padding:0 20px; }
+        .page-title { text-align:center; margin-bottom:28px; }
+        .page-title h2 { color:#1565C0; font-size:26px; }
+        .page-title p { color:#666; margin-top:5px; }
+        .card-custom {
+            background:white; border-radius:12px; padding:30px;
+            box-shadow:0 4px 20px rgba(0,0,0,0.1); margin-bottom:25px;
+        }
+        .card-custom h3 {
+            color:#1565C0; font-size:17px;
+            border-bottom:2px solid #E3F2FD;
+            padding-bottom:10px; margin-bottom:22px;
+        }
+        .form-grid {
+            display:grid; grid-template-columns:1fr 1fr 1fr; gap:18px;
+        }
+        .form-group-custom { display:flex; flex-direction:column; }
+        .form-group-custom label {
+            font-size:12px; font-weight:bold; color:#444;
+            margin-bottom:5px; text-transform:uppercase;
+        }
+        .form-group-custom input,
+        .form-group-custom select {
+            padding:9px 12px; border:1.5px solid #ddd;
+            border-radius:6px; font-size:14px;
+        }
+        .form-group-custom input:focus,
+        .form-group-custom select:focus {
+            border-color:#1565C0; outline:none;
+        }
+        .predict-btn {
+            width:100%; padding:13px; background:#1565C0;
+            color:white; border:none; border-radius:8px;
+            font-size:16px; font-weight:bold; cursor:pointer;
+            margin-top:22px;
+        }
+        .predict-btn:hover { background:#0D47A1; }
+        .result-grid {
+            display:grid; grid-template-columns:1fr 1fr 1fr;
+            gap:18px; margin-bottom:20px;
+        }
+        .result-box {
+            background:#F8F9FA; border-radius:10px; padding:20px;
+            text-align:center; border:2px solid #E3F2FD;
+        }
+        .result-box .rlabel {
+            font-size:11px; color:#888; text-transform:uppercase;
+            letter-spacing:1px; margin-bottom:8px;
+        }
+        .result-box .rvalue { font-size:26px; font-weight:bold; margin-bottom:6px; }
+        .high { color:#D32F2F; } .low { color:#2E7D32; } .blue { color:#1565C0; }
+        .badge-high {
+            background:#FFEBEE; color:#D32F2F; border:2px solid #EF9A9A;
+            padding:5px 14px; border-radius:20px; font-size:13px; font-weight:bold;
+        }
+        .badge-low {
+            background:#E8F5E9; color:#2E7D32; border:2px solid #A5D6A7;
+            padding:5px 14px; border-radius:20px; font-size:13px; font-weight:bold;
+        }
+        .recom-box {
+            background:#FFF8E1; border:2px solid #FFD54F;
+            border-radius:10px; padding:20px 25px; margin-top:18px;
+        }
+        .recom-box h4 { color:#E65100; margin-bottom:12px; }
+        .recom-box ul { list-style:none; padding:0; }
+        .recom-box ul li { padding:5px 0; color:#555; font-size:14px; }
+        .recom-box ul li::before { content:"✓ "; color:#2E7D32; font-weight:bold; }
+        .safe-box {
+            background:#E8F5E9; border:2px solid #A5D6A7;
+            border-radius:10px; padding:20px 25px; margin-top:18px;
+        }
+        .safe-box h4 { color:#2E7D32; margin-bottom:10px; }
+        .safe-box ul { list-style:none; padding:0; }
+        .safe-box ul li { padding:5px 0; font-size:14px; color:#444; }
+        .feat-table { width:100%; border-collapse:collapse; margin-top:10px; }
+        .feat-table th {
+            background:#1565C0; color:white; padding:10px 12px;
+            text-align:left; font-size:13px;
+        }
+        .feat-table td { padding:9px 12px; border-bottom:1px solid #eee; font-size:13px; }
+        .feat-table tr:hover { background:#F5F5F5; }
+        .bar-wrap { background:#E0E0E0; border-radius:4px; height:10px; width:100%; }
+        .bar-fill { background:#1565C0; height:10px; border-radius:4px; }
+        .hist-table { width:100%; border-collapse:collapse; margin-top:10px; }
+        .hist-table th {
+            background:#1565C0; color:white; padding:10px 12px;
+            font-size:13px; text-align:left;
+        }
+        .hist-table td { padding:9px 12px; border-bottom:1px solid #eee; font-size:13px; }
+        .hist-table tr:hover { background:#F5F5F5; }
+        .tag-high {
+            background:#FFEBEE; color:#D32F2F; padding:3px 10px;
+            border-radius:10px; font-size:12px; font-weight:bold;
+        }
+        .tag-low {
+            background:#E8F5E9; color:#2E7D32; padding:3px 10px;
+            border-radius:10px; font-size:12px; font-weight:bold;
+        }
+        .pid-badge {
+            background:#E3F2FD; color:#1565C0; padding:3px 10px;
+            border-radius:10px; font-size:12px; font-weight:bold;
+        }
+    </style>
 </head>
 <body>
-<div class="container">
-    <h2>New Patient Prediction</h2>
 
-    <form action="PredictRisk" method="post">
-        <div class="row">
-            <div class="col-md-4 form-group">
-                <label>Age</label>
-                <input name="age" class="form-control" type="number" step="any" required>
-            </div>
-            <div class="col-md-4 form-group">
-                <label>Gender (0=female,1=male)</label>
-                <input name="gender" class="form-control" type="number" step="1" min="0" max="1" required>
-            </div>
-            <div class="col-md-4 form-group">
-                <label>Chest Pain (0-3)</label>
-                <input name="chestpain" class="form-control" type="number" step="any" required>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-md-4 form-group">
-                <label>Resting BP</label>
-                <input name="restingBP" class="form-control" type="number" step="any" required>
-            </div>
-            <div class="col-md-4 form-group">
-                <label>Serum Cholestrol</label>
-                <input name="serumcholestrol" class="form-control" type="number" step="any" required>
-            </div>
-            <div class="col-md-4 form-group">
-                <label>Fasting Blood Sugar (0/1)</label>
-                <input name="fastingbloodsugar" class="form-control" type="number" step="1" min="0" max="1" required>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-md-4 form-group">
-                <label>Resting ECG (0-2)</label>
-                <input name="restingrelectro" class="form-control" type="number" step="any" required>
-            </div>
-            <div class="col-md-4 form-group">
-                <label>Max Heart Rate</label>
-                <input name="maxheartrate" class="form-control" type="number" step="any" required>
-            </div>
-            <div class="col-md-4 form-group">
-                <label>Exercise Angina (0/1)</label>
-                <input name="exerciseangia" class="form-control" type="number" step="1" min="0" max="1" required>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-md-4 form-group">
-                <label>Oldpeak</label>
-                <input name="oldpeak" class="form-control" type="number" step="any" required>
-            </div>
-            <div class="col-md-4 form-group">
-                <label>Slope (0-2)</label>
-                <input name="slope" class="form-control" type="number" step="any" required>
-            </div>
-            <div class="col-md-4 form-group">
-                <label>No. of Major Vessels</label>
-                <input name="noofmajorvessels" class="form-control" type="number" step="any" required>
-            </div>
-        </div>
-        <button class="btn btn-primary" type="submit">Predict</button>
-    </form>
+<div class="navbar-custom">
+    <div class="logo">Life<span>❤</span>Care</div>
+    <div class="nav-links">
+        <a href="PatientHomePage.jsp">Home</a>
+        <a href="Datasetupload">Data Upload</a>
+        <a href="preprocess">Pre-process</a>
+        <a href="FeatureSelection">Feature Selection</a>
+        <a href="Classification_process">Classification</a>
+        <a href="AnalysisPage.jsp">Analysis</a>
+        <a href="PredictRisk" class="active">Prediction</a>
+        <a href="loginpage?action=logout">Logout</a>
+    </div>
+</div>
 
-    <hr/>
-    <% if (request.getAttribute("prediction") != null) { %>
-        <div class="alert alert-info" style="margin-top:20px;">
-            <h4>Risk Result: <%= request.getAttribute("prediction") %></h4>
-            <p>Probability (disease): <b><%= request.getAttribute("probability") %></b></p>
-            <p>Top contributing factors:</p>
+<div class="container-main">
+
+    <div class="page-title">
+        <h2>🫀 Cardiovascular Disease Prediction</h2>
+        <p>Enter patient details below to predict cardiovascular disease risk</p>
+    </div>
+
+    <div class="card-custom">
+        <h3>📋 Patient Information Form</h3>
+        <form action="PredictRisk" method="post">
+            <div class="form-grid">
+
+                <div class="form-group-custom">
+                    <label>Age (years)</label>
+                    <input type="number" name="age" placeholder="e.g. 45" min="1" max="120" required/>
+                </div>
+
+                <div class="form-group-custom">
+                    <label>Gender</label>
+                    <select name="gender" required>
+                        <option value="">-- Select --</option>
+                        <option value="1">Male</option>
+                        <option value="0">Female</option>
+                    </select>
+                </div>
+
+                <div class="form-group-custom">
+                    <label>Chest Pain Type</label>
+                    <select name="chestpain" required>
+                        <option value="">-- Select --</option>
+                        <option value="0">Typical Angina</option>
+                        <option value="1">Atypical Angina</option>
+                        <option value="2">Non-Anginal Pain</option>
+                        <option value="3">Asymptomatic</option>
+                    </select>
+                </div>
+
+                <div class="form-group-custom">
+                    <label>Systolic BP (mmHg)</label>
+                    <input type="number" name="restingBP" placeholder="e.g. 120" min="50" max="250" required/>
+                </div>
+
+                <div class="form-group-custom">
+                    <label>Cholesterol Level</label>
+                    <select name="serumcholestrol" required>
+                        <option value="">-- Select --</option>
+                        <option value="1">Normal</option>
+                        <option value="2">Above Normal</option>
+                        <option value="3">Well Above Normal</option>
+                    </select>
+                </div>
+
+                <div class="form-group-custom">
+                    <label>Fasting Blood Sugar</label>
+                    <select name="fastingbloodsugar" required>
+                        <option value="">-- Select --</option>
+                        <option value="1">Greater than 120 mg/dl</option>
+                        <option value="0">Less than 120 mg/dl</option>
+                    </select>
+                </div>
+
+            </div>
+
+            <button type="submit" class="predict-btn">
+                🔍 Predict Cardiovascular Disease Risk
+            </button>
+        </form>
+    </div>
+
+    <%
+    String prediction  = (String) request.getAttribute("prediction");
+    String probability = (String) request.getAttribute("probability");
+    String patientId   = (String) request.getAttribute("patientId");
+    String modelUsed   = (String) request.getAttribute("modelUsed");
+    List<String> topFeatures = (List<String>) request.getAttribute("topFeatures");
+
+    if (prediction != null && !prediction.isEmpty() && !prediction.startsWith("Error")) {
+        boolean isHigh = prediction.contains("High");
+        double probVal = 0;
+        try { probVal = Double.parseDouble(probability) * 100; } catch(Exception ignored){}
+    %>
+
+    <div class="card-custom">
+        <h3>📊 Prediction Result</h3>
+
+        <div style="margin-bottom:15px; display:flex; gap:15px; align-items:center;">
+            <% if (patientId != null) { %>
+            <span class="pid-badge">Patient ID: <%= patientId %></span>
+            <% } %>
+            <% if (modelUsed != null) { %>
+            <span style="font-size:13px; color:#666;">Model: <strong><%= modelUsed %></strong></span>
+            <% } %>
+        </div>
+
+        <div class="result-grid">
+            <div class="result-box">
+                <div class="rlabel">Risk Level</div>
+                <div class="rvalue <%= isHigh ? "high":"low" %>"><%= isHigh ? "HIGH":"LOW" %></div>
+                <span class="<%= isHigh ? "badge-high":"badge-low" %>">
+                    <%= isHigh ? "⚠ High Risk":"✓ Low Risk" %>
+                </span>
+            </div>
+
+            <div class="result-box">
+                <div class="rlabel">Cardiovascular Disease</div>
+                <div class="rvalue <%= isHigh ? "high":"low" %>"><%= isHigh ? "YES":"NO" %></div>
+                <span class="<%= isHigh ? "badge-high":"badge-low" %>">
+                    <%= isHigh ? "CVD Detected" : "CVD Not Detected" %>
+                </span>
+            </div>
+
+            <div class="result-box">
+                <div class="rlabel">Confidence Score</div>
+                <div class="rvalue blue"><%= String.format("%.1f", probVal) %>%</div>
+                <span style="font-size:11px; color:#888;">Model Confidence</span>
+            </div>
+        </div>
+
+        <% if (isHigh) { %>
+        <div class="recom-box">
+            <h4>⚕ Recommended Actions</h4>
             <ul>
-                <% java.util.List<String> top = (java.util.List<String>) request.getAttribute("topFeatures");
-                   if (top!=null) for (String f: top) { %>
-                    <li><%= f %></li>
-                <% } %>
+                <li>Consult a cardiologist immediately</li>
+                <li>Reduce cholesterol through diet changes</li>
+                <li>Avoid smoking and alcohol consumption</li>
+                <li>Exercise regularly — 30 mins daily walking</li>
+                <li>Monitor blood pressure every day</li>
+                <li>Maintain healthy weight and balanced diet</li>
+                <li>Take prescribed medications regularly</li>
+                <li>Schedule regular cardiac checkups</li>
             </ul>
         </div>
+        <% } else { %>
+        <div class="safe-box">
+            <h4>✅ Good Health Indicators</h4>
+            <ul>
+                <li>✓ Continue maintaining a healthy lifestyle</li>
+                <li>✓ Exercise regularly and eat a balanced diet</li>
+                <li>✓ Schedule annual health checkups</li>
+                <li>✓ Monitor blood pressure periodically</li>
+            </ul>
+        </div>
+        <% } %>
+    </div>
+
+    <% if (topFeatures != null && !topFeatures.isEmpty()) { %>
+    <div class="card-custom">
+        <h3>🔬 Feature Importance — Top Risk Factors</h3>
+        <table class="feat-table">
+            <tr>
+                <th>Rank</th><th>Feature Name</th>
+                <th>Importance Score</th><th>Visual Bar</th>
+            </tr>
+            <%
+            int rank = 1;
+            for (String feat : topFeatures) {
+                String[] parts = feat.split("score=");
+                String fname = parts[0].trim().replace("(","").trim();
+                String fscore = parts.length > 1 ? parts[1].replace(")","").trim() : "0";
+                double scoreVal = 0;
+                try { scoreVal = Double.parseDouble(fscore); } catch(Exception ignored){}
+                int barW = (int)(scoreVal * 500);
+                if (barW > 100) barW = 100;
+                if (barW < 5) barW = 5;
+            %>
+            <tr>
+                <td><strong>#<%= rank++ %></strong></td>
+                <td><strong><%= fname %></strong></td>
+                <td><%= fscore %></td>
+                <td><div class="bar-wrap"><div class="bar-fill" style="width:<%= barW %>%"></div></div></td>
+            </tr>
+            <% } %>
+        </table>
+    </div>
+    <% } %>
+
+    <% } else if (prediction != null && prediction.startsWith("Error")) { %>
+    <div class="card-custom" style="border-left:4px solid #D32F2F;">
+        <h3 style="color:#D32F2F;">⚠ Prediction Error</h3>
+        <p style="color:#555;"><%= prediction %></p>
+    </div>
+    <% } %>
+
+    <%
+    List<String[]> history = null;
+    HttpSession sess = request.getSession(false);
+    if (sess != null) history = (List<String[]>) sess.getAttribute("predictionHistory");
+    if (history != null && !history.isEmpty()) {
+    %>
+    <div class="card-custom">
+        <h3>📅 Prediction History</h3>
+        <table class="hist-table">
+            <tr>
+                <th>Patient ID</th><th>Age</th><th>Gender</th>
+                <th>Prediction</th><th>Confidence</th><th>Date &amp; Time</th>
+            </tr>
+            <%
+            for (String[] h : history) {
+                boolean hHigh = h[3].contains("High");
+            %>
+            <tr>
+                <td><span class="pid-badge"><%= h[0] %></span></td>
+                <td><%= h[1] %></td>
+                <td><%= h[2].equals("1") ? "Male" : "Female" %></td>
+                <td><span class="<%= hHigh ? "tag-high":"tag-low" %>">
+                    <%= hHigh ? "⚠ High Risk":"✓ Low Risk" %></span></td>
+                <td><%= h[4] %>%</td>
+                <td><%= h[5] %></td>
+            </tr>
+            <% } %>
+        </table>
+    </div>
     <% } %>
 
 </div>

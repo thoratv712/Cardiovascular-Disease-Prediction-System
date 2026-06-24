@@ -17,7 +17,7 @@ import com.connection.Dbconn;
 /**
  * Servlet implementation class Classification_process
  */
-@WebServlet("/Classification_process")
+//@WebServlet("/Classification_process")
 public class Classification_process extends HttpServlet {
 	private static final long serialVersionUID = 1L;
        

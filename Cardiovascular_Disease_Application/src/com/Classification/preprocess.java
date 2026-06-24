@@ -26,7 +26,7 @@ import com.connection.Dbconn;
 /**
  * Servlet implementation class preprocess
  */
-@WebServlet("/preprocess")
+//@WebServlet("/preprocess")
 public class preprocess extends HttpServlet {
 	private static final long serialVersionUID = 1L;
        

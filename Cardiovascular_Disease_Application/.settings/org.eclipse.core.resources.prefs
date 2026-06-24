@@ -1,4 +1,6 @@
 eclipse.preferences.version=1
+encoding//WebContent/AnalysisPage.jsp=UTF-8
+encoding//WebContent/PatientDataPage.jsp=UTF-8
 encoding//src/com/Classification/FeatureSelection.java=UTF-8
 encoding//src/com/Classification/PredictUserInput.java=UTF-8
 encoding//src/com/admin/DatabaseToCSV.java=UTF-8
